@@ -1,5 +1,5 @@
 /*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@gmail.com)
+Programmer: Alberto Bobadilla (labigm@gmail.com) & Beau Marwaha - bcm2463@rit.edu
 Date: 2017/05
 ----------------------------------------------*/
 #ifndef __APPLICATIONCLASS_H_
@@ -26,7 +26,7 @@ class Application
 	MyMesh* m_pSphere = nullptr;
 	MyMesh* m_pTorus = nullptr;
 private:
-	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";
+	String m_sProgrammer = "Beau Marwaha - bcm2463@rit.edu";
 	static ImGuiObject gui; //GUI object
 	
 	uint m_uRenderCallCount = 0; //count of render calls per frame

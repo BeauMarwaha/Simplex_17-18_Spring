@@ -1,5 +1,5 @@
 /*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@gmail.com)
+Programmer: Alberto Bobadilla (labigm@gmail.com) & Beau Marwaha - bcm2463@rit.edu
 Date: 2017/05
 ----------------------------------------------*/
 #ifndef __MYMESH_H_
