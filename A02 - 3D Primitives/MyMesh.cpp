@@ -473,78 +473,49 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// My Code
-	//// Testing Taurus V1 - Does not make use of the passed in number of horizontal subdivisions (a_nSubdivisionsA)
-	//// Radius is equal to half the distance between the inner and outer edges
-	//float radius = (a_fOuterRadius - a_fInnerRadius) / 2;
+	// Testing Taurus V1 - Does not make use of the passed in number of horizontal subdivisions (a_nSubdivisionsA)
+	// Radius is equal to half the distance between the inner and outer edges
+	float radius = (a_fOuterRadius - a_fInnerRadius) / 2;
 
-	//std::vector<vector3> bottomVerts = std::vector<vector3>();
-	//std::vector<vector3> topVerts = std::vector<vector3>();
-	//std::vector<vector3> insideVerts = std::vector<vector3>();
-	//std::vector<vector3> outsideVerts = std::vector<vector3>();
-	//for (int i = 0; i < a_nSubdivisionsB; i++) {
-	//	float angle = (PI * 2) * ((float)i / (float)a_nSubdivisionsB);
-	//	float sine = sin(angle);
-	//	float cosine = cos(angle);
+	std::vector<vector3> bottomVerts = std::vector<vector3>();
+	std::vector<vector3> topVerts = std::vector<vector3>();
+	std::vector<vector3> insideVerts = std::vector<vector3>();
+	std::vector<vector3> outsideVerts = std::vector<vector3>();
+	for (int i = 0; i < a_nSubdivisionsB; i++) {
+		float angle = (PI * 2) * ((float)i / (float)a_nSubdivisionsB);
+		float sine = sin(angle);
+		float cosine = cos(angle);
 
-	//	// Add Outside vertices
-	//	bottomVerts.push_back(vector3(cosine * (a_fInnerRadius + radius), -radius, sine * (a_fInnerRadius + radius)));
-	//	topVerts.push_back(vector3(cosine * (a_fInnerRadius + radius), radius, sine * (a_fInnerRadius + radius)));
+		// Add Outside vertices
+		bottomVerts.push_back(vector3(cosine * (a_fInnerRadius + radius), -radius, sine * (a_fInnerRadius + radius)));
+		topVerts.push_back(vector3(cosine * (a_fInnerRadius + radius), radius, sine * (a_fInnerRadius + radius)));
 
-	//	// Add Inside vertices
-	//	insideVerts.push_back(vector3(cosine * a_fInnerRadius, 0, sine * a_fInnerRadius));
-	//	outsideVerts.push_back(vector3(cosine * a_fOuterRadius, 0, sine * a_fOuterRadius));
-	//}
-
-	//// Generate Geometry
-	//for (int i = 0; i < a_nSubdivisionsB - 1; i++) {
-	//	// Bottom - Inside
-	//	AddQuad(insideVerts[i + 1], insideVerts[i], bottomVerts[i + 1], bottomVerts[i]);
-	//	// Bottom - Outside
-	//	AddQuad(bottomVerts[i + 1], bottomVerts[i], outsideVerts[i + 1], outsideVerts[i]);
-	//	// Top - Inside
-	//	AddQuad(topVerts[i + 1], topVerts[i], insideVerts[i + 1], insideVerts[i]);
-	//	// Top - Outside
-	//	AddQuad(outsideVerts[i + 1], outsideVerts[i], topVerts[i + 1], topVerts[i]);
-	//}
-
-	//// Add final quads connecting the beggining and ending points
-	//// Bottom - Inside
-	//AddQuad(insideVerts[0], insideVerts[a_nSubdivisionsB - 1], bottomVerts[0], bottomVerts[a_nSubdivisionsB - 1]);
-	//// Bottom - Outside
-	//AddQuad(bottomVerts[0], bottomVerts[a_nSubdivisionsB - 1], outsideVerts[0], outsideVerts[a_nSubdivisionsB - 1]);
-	//// Top - Inside
-	//AddQuad(topVerts[0], topVerts[a_nSubdivisionsB - 1], insideVerts[0], insideVerts[a_nSubdivisionsB - 1]);
-	//// Top - Outside
-	//AddQuad(outsideVerts[0], outsideVerts[a_nSubdivisionsB - 1], topVerts[0], topVerts[a_nSubdivisionsB - 1]);
-
-
-	// Testing Taurus V1 - Makes use of the passed in number of horizontal subdivisions (a_nSubdivisionsA)
-	for (int x = 0; x < a_nSubdivisionsA; x++)
-	{
-		float phi1 = PI * ((float)(x) / a_nSubdivisionsA);
-		float phi2 = PI * ((float)(x + 1) / a_nSubdivisionsA);
-
-		for (int y = 0; y < a_nSubdivisionsB; y++)
-		{
-			float theta1 = (PI * 2) * ((float)(y) / a_nSubdivisionsB);
-			float theta2 = (PI * 2) * ((float)(y + 1) / a_nSubdivisionsB);
-
-			//theta2  theta1
-			//	 |      |
-			//   2------1 -- phi1
-			//   |\ _   |
-			//   |    \ |
-			//   3------4 -- phi2
-
-			vector3 vertex1 = vector3(sin(phi1) * cos(theta1), sin(phi1) * sin(theta1), cos(phi1)); //vertex on a sphere of radius a_fRadius at spherical coords theta1, phi1
-			vector3 vertex2 = vector3(sin(phi2) * cos(theta1), sin(phi2) * sin(theta1), cos(phi2)); //vertex on a sphere of radius a_fRadius at spherical coords theta1, phi2
-			vector3 vertex3 = vector3(sin(phi2) * cos(theta2), sin(phi2) * sin(theta2), cos(phi2)); //vertex on a sphere of radius a_fRadius at spherical coords theta2, phi2
-			vector3 vertex4 = vector3(sin(phi1) * cos(theta2), sin(phi1) * sin(theta2), cos(phi1)); //vertex on a sphere of radius a_fRadius at spherical coords theta2, phi1
-
-			// Middle of the sphere
-			AddQuad(vertex3, vertex4, vertex2, vertex1);
-		}
+		// Add Inside vertices
+		insideVerts.push_back(vector3(cosine * a_fInnerRadius, 0, sine * a_fInnerRadius));
+		outsideVerts.push_back(vector3(cosine * a_fOuterRadius, 0, sine * a_fOuterRadius));
 	}
+
+	// Generate Geometry
+	for (int i = 0; i < a_nSubdivisionsB - 1; i++) {
+		// Bottom - Inside
+		AddQuad(insideVerts[i + 1], insideVerts[i], bottomVerts[i + 1], bottomVerts[i]);
+		// Bottom - Outside
+		AddQuad(bottomVerts[i + 1], bottomVerts[i], outsideVerts[i + 1], outsideVerts[i]);
+		// Top - Inside
+		AddQuad(topVerts[i + 1], topVerts[i], insideVerts[i + 1], insideVerts[i]);
+		// Top - Outside
+		AddQuad(outsideVerts[i + 1], outsideVerts[i], topVerts[i + 1], topVerts[i]);
+	}
+
+	// Add final quads connecting the beggining and ending points
+	// Bottom - Inside
+	AddQuad(insideVerts[0], insideVerts[a_nSubdivisionsB - 1], bottomVerts[0], bottomVerts[a_nSubdivisionsB - 1]);
+	// Bottom - Outside
+	AddQuad(bottomVerts[0], bottomVerts[a_nSubdivisionsB - 1], outsideVerts[0], outsideVerts[a_nSubdivisionsB - 1]);
+	// Top - Inside
+	AddQuad(topVerts[0], topVerts[a_nSubdivisionsB - 1], insideVerts[0], insideVerts[a_nSubdivisionsB - 1]);
+	// Top - Outside
+	AddQuad(outsideVerts[0], outsideVerts[a_nSubdivisionsB - 1], topVerts[0], topVerts[a_nSubdivisionsB - 1]);
 	// -------------------------------
 
 	// Adding information about color
@@ -569,7 +540,7 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Init();
 
 	// My Code
-	//a_nSubdivisions = 10;  // USED FOR TESTING - COMMENT ME OUT BEFORE SUBMITTING
+	a_nSubdivisions = 10;  // USED FOR TESTING - COMMENT ME OUT BEFORE SUBMITTING
 	int cuts = a_nSubdivisions; // The number of horizontal cuts
 	int slices = a_nSubdivisions; // The number of vertical cuts
 
@@ -598,17 +569,17 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 			// Generate the Sphere
 			if (x == 0)
 			{
-				// Top of the sphere
+				// Top section of the sphere
 				AddTri(vertex1, vertex2, vertex3); 
 			}
 			else if (x + 1 == cuts)
 			{
-				// Bottom of the sphere
+				// Bottom section of the sphere
 				AddTri(vertex1, vertex2, vertex4); 
 			}
 			else
 			{
-				// Middle of the sphere
+				// Middle sections of the sphere
 				AddQuad(vertex3, vertex4, vertex2, vertex1);
 			}
 		}
