@@ -59,7 +59,44 @@ void Application::Display(void)
 
 
 	//your code goes here
-	v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
+	static int lastStop = 0; // Static tracker of what the last stop was
+	static float distanceToNextStop = 0; // Static tracker of the percentage of the way to the next stop
+	static int lastFullSecond = 0; // Static tracker of the last full second of game run time
+
+	// Calculates the current time since the last full second 
+	distanceToNextStop = fmod(fTimer, 1);
+
+	// This logic allows us to figure out when the object should start moving to the next stop by incrementing lastStop every one second
+	//  as one second is how long it will take the object to traverse one stop
+	if (lastFullSecond < (int)fTimer) 
+	{
+		// Set the last full second to the current second
+		lastFullSecond = (int)fTimer;
+
+		// Reset the distance to the next stop to 0
+		distanceToNextStop = 0;
+
+		// Increment the last stop unless this will be the final stop in which case reset last stop to 0
+		if ((lastStop + 1) != m_stopsList.size())
+		{
+			lastStop++;
+		}
+		else
+		{
+			lastStop = 0;
+		}
+	}
+	
+	// LERP logic between the concurrent points in the stops list 
+	//  unless this will be the final stop in which case LERP between the final and first stops
+	if ((lastStop + 1) != m_stopsList.size()) 
+	{
+		v3CurrentPos = glm::lerp(m_stopsList[lastStop], m_stopsList[lastStop + 1], distanceToNextStop);
+	}
+	else
+	{
+		v3CurrentPos = glm::lerp(m_stopsList[m_stopsList.size() - 1], m_stopsList[0], distanceToNextStop);
+	}
 	//-------------------
 	
 
