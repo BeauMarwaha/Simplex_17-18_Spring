@@ -122,6 +122,12 @@ void Application::ProcessKeyReleased(sf::Event a_event)
 			}
 		}
 		break;
+	case sf::Keyboard::W:
+	{
+		vector3 v3Pos = m_pCamera->GetPosition();
+		m_pCamera->SetPosition(v3Pos + vector3(0.0f, 0.0f, 0.1f));
+	}
+		break;
 	}
 
 	//gui
