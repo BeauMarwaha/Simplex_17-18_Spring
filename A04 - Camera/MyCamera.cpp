@@ -11,7 +11,17 @@ vector3 Simplex::MyCamera::GetPosition()
 
 void Simplex::MyCamera::SetTarget(vector3 a_v3Target) { m_v3Target = a_v3Target; }
 
+vector3 Simplex::MyCamera::GetTarget()
+{
+	return m_v3Target;
+}
+
 void Simplex::MyCamera::SetUp(vector3 a_v3Up) { m_v3Up = a_v3Up; }
+
+vector3 Simplex::MyCamera::GetUp()
+{
+	return m_v3Up;
+}
 
 void Simplex::MyCamera::SetPerspective(bool a_bPerspective) { m_bPerspective = a_bPerspective; }
 
@@ -103,6 +113,10 @@ void Simplex::MyCamera::Swap(MyCamera & other)
 
 	std::swap(m_m4View, other.m_m4View);
 	std::swap(m_m4Projection, other.m_m4Projection);
+
+
+	std::swap(m_fSpeed, other.m_fSpeed);
+	std::swap(m_qOrientation, other.m_qOrientation);
 }
 
 Simplex::MyCamera::~MyCamera(void)
@@ -158,4 +172,78 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 										m_v2Vertical.x, m_v2Vertical.y, //vertical
 										m_v2NearFar.x, m_v2NearFar.y); //near and far
 	}
+}
+
+void Simplex::MyCamera::Rotate(float a_fYaw, float a_fPitch, float a_fRoll)
+{
+	// Rotate the quaternion by the passed in values
+
+	//a_fYaw = a_fPitch = a_fRoll = 0.0f;
+
+	//// Create a quaternion based on passed in pitch/yaw/roll
+	//quaternion key_quat = quaternion(glm::vec3(a_fPitch, a_fYaw, a_fRoll));
+
+	//// Update the camera quaternion
+	//m_qOrientation = key_quat * m_qOrientation;
+	//m_qOrientation = glm::normalize(m_qOrientation);
+
+	m_qOrientation = m_qOrientation * glm::angleAxis(a_fYaw, vector3(1.0f, 0.0f, 0.0f));
+	m_qOrientation = m_qOrientation * glm::angleAxis(a_fPitch, vector3(0.0f, 1.0f, 0.0f));
+	m_qOrientation = m_qOrientation * glm::angleAxis(a_fRoll, vector3(0.0f, 0.0f, 1.0f));
+
+	//SetUp(m_qOrientation * GetUp());
+	SetUp(m_qOrientation * vector3(0, 1, 0));
+	SetTarget((m_qOrientation * (GetTarget() - GetPosition())) + GetPosition());
+	//SetTarget(m_qOrientation * vector3(1, 0, 0));
+}
+
+void Simplex::MyCamera::Move(void)
+{
+	// Reset Velocity
+	vector3 velocity = vector3();
+
+	// Adjust camera velocity depending on user input
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) // W key pressed
+	{
+		// Move the camera forwards
+		velocity += m_qOrientation * glm::vec3(0, 0, -1);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) // S key pressed
+	{ 
+		// Move the camera backwards
+		velocity += m_qOrientation * glm::vec3(0, 0, 1);
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) // A key pressed
+	{
+		// Move the camera to the left
+		velocity += m_qOrientation * glm::vec3(-1, 0, 0);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) // D key pressed
+	{
+		// Move the camera to the right
+		velocity += m_qOrientation * glm::vec3(1, 0, 0);
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) // Q key pressed
+	{
+		// Move the camera upwards
+		velocity += m_qOrientation * glm::vec3(0, 1, 0);
+	}
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) // E key pressed
+	{
+		// Move the camera downwards
+		velocity += m_qOrientation * glm::vec3(0, -1, 0);
+	}
+
+	// Check to make sure the velocity isn't zero
+	if (velocity != vector3()) 
+	{
+		// Normalize velocity and multiply it by camera speed
+		velocity = glm::normalize(velocity) * m_fSpeed;
+	}
+	
+	// Move the camera position and target based on velocity and time since last update
+	SetPosition(GetPosition() + timer.dt * velocity);
+	SetTarget(GetTarget() + timer.dt * velocity);
 }

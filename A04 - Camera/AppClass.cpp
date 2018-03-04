@@ -31,6 +31,12 @@ void Application::Update(void)
 	//Is the first person camera active?
 	CameraRotation();
 
+	// Update the camera's timer
+	m_pCamera->timer.Update();
+
+	// Move the camera
+	m_pCamera->Move();
+
 	//Add objects to the Manager
 	for (int j = -50; j < 50; j += 2)
 	{

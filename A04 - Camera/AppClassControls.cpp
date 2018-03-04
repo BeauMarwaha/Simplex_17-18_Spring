@@ -122,12 +122,6 @@ void Application::ProcessKeyReleased(sf::Event a_event)
 			}
 		}
 		break;
-	case sf::Keyboard::W:
-	{
-		vector3 v3Pos = m_pCamera->GetPosition();
-		m_pCamera->SetPosition(v3Pos + vector3(0.0f, 0.0f, 0.1f));
-	}
-		break;
 	}
 
 	//gui
@@ -339,7 +333,7 @@ void Application::CameraRotation(float a_fSpeed)
 	UINT	MouseX, MouseY;		// Coordinates for the mouse
 	UINT	CenterX, CenterY;	// Coordinates for the center of the screen.
 
-								//Initialize the position of the pointer to the middle of the screen
+	//Initialize the position of the pointer to the middle of the screen
 	CenterX = m_pSystem->GetWindowX() + m_pSystem->GetWindowWidth() / 2;
 	CenterY = m_pSystem->GetWindowY() + m_pSystem->GetWindowHeight() / 2;
 
@@ -374,7 +368,11 @@ void Application::CameraRotation(float a_fSpeed)
 		fDeltaMouse = static_cast<float>(MouseY - CenterY);
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
+
 	//Change the Yaw and the Pitch of the camera
+	// Rotate the camera
+	m_pCamera->Rotate(-fAngleX, -fAngleY, 0.0f);
+
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
 //Keyboard

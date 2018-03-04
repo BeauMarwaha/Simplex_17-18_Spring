@@ -1,11 +1,12 @@
 /*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@gmail.com)
+Programmer: Alberto Bobadilla (labigm@gmail.com) & Beau Marwaha (bcm2463@g.rit.edu)
 Date: 2017/06
 ----------------------------------------------*/
 #ifndef __MYCAMERACLASS_H_
 #define __MYCAMERACLASS_H_
 
 #include "Definitions.h"
+#include "Timer.h"
 
 namespace Simplex
 {
@@ -28,7 +29,15 @@ class MyCamera
 
 	matrix4 m_m4View; //View matrix
 	matrix4 m_m4Projection; //Projection Matrix
+
+	float m_fSpeed = 5.0f; // Speed of the camera
+	vector2 m_v2MousePos; // Mouse Position
+	quaternion m_qOrientation = quaternion(); // Orientation of the camera represented as a quaternion
+
 public:
+	// Timer for the camera used with controlling movement
+	Timer timer = Timer();
+
 	/*
 	USAGE: Constructor
 	ARGUMENTS: ---
@@ -211,6 +220,23 @@ public:
 	OUTPUT: ---
 	*/
 	void CalculateProjectionMatrix(void);
+
+	/*
+	USAGE: Rotate the camera based on yaw/pitch/roll input
+	ARGUMENTS: 
+	-	float a_fYaw -> Yaw rotation
+	-	float a_fPitch -> Pitch rotation
+	-   float a_fRoll -> Roll rotation
+	OUTPUT: ---
+	*/
+	void Rotate(float a_fYaw, float a_fPitch, float a_fRoll);
+
+	/*
+	USAGE: Moves the camera based on player input
+	ARGUMENTS: ---
+	OUTPUT: ---
+	*/
+	void Move(void);
 };
 
 } //namespace Simplex
