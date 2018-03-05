@@ -31,6 +31,7 @@ class MyCamera
 	matrix4 m_m4Projection; //Projection Matrix
 
 	float m_fSpeed = 5.0f; // Speed of the camera
+	float a_fSens = 5.0f; // Sensitivity of the camera
 	vector2 m_v2MousePos; // Mouse Position
 	quaternion m_qOrientation = quaternion(); // Orientation of the camera represented as a quaternion
 

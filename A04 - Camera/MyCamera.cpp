@@ -187,14 +187,21 @@ void Simplex::MyCamera::Rotate(float a_fYaw, float a_fPitch, float a_fRoll)
 	//m_qOrientation = key_quat * m_qOrientation;
 	//m_qOrientation = glm::normalize(m_qOrientation);
 
-	m_qOrientation = m_qOrientation * glm::angleAxis(a_fYaw, vector3(1.0f, 0.0f, 0.0f));
-	m_qOrientation = m_qOrientation * glm::angleAxis(a_fPitch, vector3(0.0f, 1.0f, 0.0f));
-	m_qOrientation = m_qOrientation * glm::angleAxis(a_fRoll, vector3(0.0f, 0.0f, 1.0f));
+	/*m_qOrientation = m_qOrientation * glm::angleAxis(a_fPitch, vector3(1.0f, 0.0f, 0.0f));
+	m_qOrientation = m_qOrientation * glm::angleAxis(a_fYaw, vector3(0.0f, 1.0f, 0.0f));
+	m_qOrientation = m_qOrientation * glm::angleAxis(a_fRoll, vector3(0.0f, 0.0f, 1.0f));*/
 
-	//SetUp(m_qOrientation * GetUp());
+	// Generate quaternions for pitch/yaw/roll using angle axis
+	quaternion qPitch = glm::angleAxis(a_fPitch * a_fSens, vector3(1.0f, 0.0f, 0.0f));
+	quaternion qYaw = glm::angleAxis(a_fYaw * a_fSens, vector3(0.0f, 1.0f, 0.0f));
+	quaternion qRoll = glm::angleAxis(a_fRoll * a_fSens, vector3(0.0f, 0.0f, 1.0f));
+
+	// For this camera we can ommit roll
+	m_qOrientation = qPitch * qYaw;
+	m_qOrientation = glm::normalize(m_qOrientation);
+
 	SetUp(m_qOrientation * vector3(0, 1, 0));
 	SetTarget((m_qOrientation * (GetTarget() - GetPosition())) + GetPosition());
-	//SetTarget(m_qOrientation * vector3(1, 0, 0));
 }
 
 void Simplex::MyCamera::Move(void)
