@@ -17,6 +17,9 @@ class MyCamera
 	vector3 m_v3Target = vector3(0.0f, 0.0f, 0.0f); //What I'm looking at
 	vector3 m_v3Up = vector3(0.0f, 1.0f, 0.0f); //What is up
 
+	vector3 m_v3Forward = glm::normalize(m_v3Target - m_v3Position); // Forward vector of the camera
+	vector3 m_v3Right = glm::cross(m_v3Forward, m_v3Up); // Right vector of the camera
+
 	bool m_bPerspective = true; //perspective view? False is Orthographic
 
 	float m_fFOV = 45.0f; //Field of View
@@ -32,8 +35,7 @@ class MyCamera
 
 	float m_fSpeed = 5.0f; // Speed of the camera
 	float a_fSens = 5.0f; // Sensitivity of the camera
-	vector2 m_v2MousePos; // Mouse Position
-	quaternion m_qOrientation = quaternion(); // Orientation of the camera represented as a quaternion
+	quaternion m_qOrientation = quaternion(m_v3Forward); // Orientation of the camera represented as a quaternion
 
 public:
 	// Timer for the camera used with controlling movement
