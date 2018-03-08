@@ -188,14 +188,14 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 void Simplex::MyCamera::Rotate(float a_fYaw, float a_fPitch, float a_fRoll)
 {
 	// Generate quaternions for pitch/yaw/roll using angle axis
-	quaternion qPitch = glm::angleAxis(a_fPitch * a_fSens, vector3(1.0f, 0.0f, 0.0f));
-	quaternion qYaw = glm::angleAxis(a_fYaw * a_fSens, vector3(0.0f, 1.0f, 0.0f));
+	quaternion qPitch = glm::angleAxis(a_fPitch * a_fSens, AXIS_X);
+	quaternion qYaw = glm::angleAxis(a_fYaw * a_fSens, GetUp());
 	//quaternion qRoll = glm::angleAxis(a_fRoll * a_fSens, vector3(0.0f, 0.0f, 1.0f));
 
 	// For this camera we can ommit roll
 	m_qOrientation = glm::cross(qPitch, qYaw);
 	m_qOrientation = glm::normalize(m_qOrientation);
-
+	
 	// Set forward vector
 	m_v3Forward = glm::rotate(m_qOrientation, glm::normalize(m_v3Target - m_v3Position));
 
