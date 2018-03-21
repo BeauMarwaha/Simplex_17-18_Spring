@@ -373,7 +373,7 @@ void Application::CameraRotation(float a_fSpeed)
 	// Rotate the camera
 	m_fAngleX = fAngleX;
 	m_fAngleY = fAngleY;
-	m_pCamera->Rotate(fAngleY, -fAngleX, 0.0f);
+	m_pCamera->Rotate(-fAngleY, fAngleX, 0.0f);
 
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }

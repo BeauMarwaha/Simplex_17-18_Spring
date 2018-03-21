@@ -34,8 +34,12 @@ class MyCamera
 	matrix4 m_m4Projection; //Projection Matrix
 
 	float m_fSpeed = 5.0f; // Speed of the camera
-	float a_fSens = 5.0f; // Sensitivity of the camera
+	float m_fSens = 0.5f; // Sensitivity of the camera
+
 	quaternion m_qOrientation = quaternion(m_v3Forward); // Orientation of the camera represented as a quaternion
+
+	matrix3 m_m3RotationMat; // Camera's Rotation Matrix
+	vector3 m_v3Rotation; // Camera Rotation
 
 public:
 	// Timer for the camera used with controlling movement
