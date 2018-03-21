@@ -187,15 +187,20 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 
 void Simplex::MyCamera::Rotate(float a_fYaw, float a_fPitch, float a_fRoll)
 {
+	static float yaw = 0;
+	yaw += a_fYaw;
+	static float pitch = 0;
+	pitch += a_fPitch;
+
 	// Generate quaternions for pitch/yaw/roll using angle axis
-	quaternion qPitch = glm::angleAxis(a_fPitch * a_fSens, AXIS_X);
-	quaternion qYaw = glm::angleAxis(a_fYaw * a_fSens, AXIS_Y);
-	//quaternion qRoll = glm::angleAxis(a_fRoll * a_fSens, vector3(0.0f, 0.0f, 1.0f));
+	quaternion qPitch = glm::angleAxis(pitch * a_fSens, glm::normalize(m_v3Target - m_v3Position));
+	quaternion qYaw = glm::angleAxis(yaw * a_fSens, glm::normalize(m_v3Up - m_v3Position));
+	//quaternion qRoll = glm::angleAxis(a_fRoll * a_fSens, m_v3Right);
 
 	// For this camera we can ommit roll
 	m_qOrientation = glm::cross(qPitch, qYaw);
 	m_qOrientation = glm::normalize(m_qOrientation);
-	
+
 	// Set forward vector
 	m_v3Forward = glm::rotate(m_qOrientation, glm::normalize(m_v3Target - m_v3Position));
 
@@ -203,7 +208,8 @@ void Simplex::MyCamera::Rotate(float a_fYaw, float a_fPitch, float a_fRoll)
 	m_v3Target = m_v3Forward + m_v3Position;
 
 	// Set Up vector
-	m_v3Up = m_qOrientation * glm::vec3(0, 1, 0);
+	m_v3Up = glm::rotate(m_qOrientation, glm::normalize(m_v3Up - m_v3Position));
+	//m_v3Up = m_qOrientation * glm::vec3(0, 1, 0);
 	//m_v3Up = m_qOrientation * GetUp();
 	//m_v3Up = glm::rotate(m_qOrientation, glm::normalize(GetUp()));
 	//m_v3Up = glm::cross(m_v3Forward, m_v3Right);

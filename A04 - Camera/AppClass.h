@@ -16,6 +16,8 @@ namespace Simplex
 
 class Application
 {
+	float m_fAngleY = 0;
+	float m_fAngleX = 0;
 	MyCamera* m_pCamera = nullptr; //Camera class
 	MyMeshManager* m_pMyMeshMngr = nullptr; //My Mesh Manager
 	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu"; //Programmer

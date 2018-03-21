@@ -36,7 +36,10 @@ void Application::DrawGUI(void)
 			ImGui::Text("Control:\n");
 			ImGui::Text("   WASD: Movement\n");
 			ImGui::Text("Right Click + move: Rotate line of view\n");
-
+			ImGui::Text("AngleX\n");
+			ImGui::TextColored(v4Color, std::to_string(m_fAngleX).c_str());
+			ImGui::Text("AngleY\n");
+			ImGui::TextColored(v4Color, std::to_string(m_fAngleY).c_str());
 		}
 		ImGui::End();
 	}
