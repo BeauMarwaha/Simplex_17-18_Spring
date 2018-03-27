@@ -50,7 +50,7 @@ void Application::Update(void)
 	//m_pSteveRB->SetModelMatrix(mSteve);
 	
 
-	m_pCreeper->AddToRenderList();
+	//m_pCreeper->AddToRenderList();
 	//m_pCreeper->PlaySequence();
 	m_pCreeperRB->AddToRenderList();
 
@@ -62,8 +62,11 @@ void Application::Display(void)
 	//Clear the screen
 	ClearScreen();
 
+
+	m_pMeshMngr->AddIsoSphereToRenderList(IDENTITY_M4, C_RED, RENDER_WIRE | RENDER_SOLID);
+
 	//Add grid to the scene
-	//m_pMeshMngr->AddGridToRenderList();
+	m_pMeshMngr->AddGridToRenderList();
 
 	//Add skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
