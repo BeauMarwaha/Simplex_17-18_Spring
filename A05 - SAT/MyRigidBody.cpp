@@ -277,8 +277,6 @@ void MyRigidBody::AddToRenderList(void)
 uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
 	/*
-	Your code goes here instead of this comment;
-
 	For this method, if there is an axis that separates the two objects
 	then the return will be different than 0; 1 for any separating axis
 	is ok if you are not going for the extra credit, if you could not
@@ -287,6 +285,199 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
 
-	//there is no axis test that separates this two objects
+	#pragma region Initial OBB Setup
+	// Define OBB (Oriented Bounding Box) for later use
+	struct OBB {
+		vector3 c;		// The center point
+		vector3 u[3];	// Local x, y, and, z axis
+		vector3 e;		// Positive halfwidths along each axis
+	};
+
+	// Define this object as OBB a
+	OBB a = OBB();
+	a.c = m_v3Center;
+	a.u[0] = vector3(m_v3MaxL.x - m_v3MinL.x); //**************************Figure these values out
+	a.u[1] = vector3(); //**************************Figure these values out
+	a.u[2] = vector3(); //**************************Figure these values out
+	a.e = m_v3HalfWidth;
+
+	// Define the object we are checking as OBB b
+	OBB b = OBB();
+	b.c = a_pOther->m_v3Center;
+	b.u[0] = vector3(); //**************************Figure these values out
+	b.u[1] = vector3(); //**************************Figure these values out
+	b.u[2] = vector3(); //**************************Figure these values out
+	b.e = a_pOther->m_v3HalfWidth;
+	#pragma endregion
+	
+	#pragma region Initial Calculations
+	float ra, rb;
+	matrix3 R, AbsR;
+
+	// Calculate a rotation matrix expressing b in a's coordinate space
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			R[i][j] = glm::dot(a.u[i], b.u[j]);
+		}
+	}
+
+	// Calculate t which is the difference between OBB a and b's centers
+	vector3 t = b.c - a.c;
+	// Bring t into a's coordinate space
+	t = vector3(glm::dot(t, a.u[0]), glm::dot(t, a.u[2]), glm::dot(t, a.u[2])); //******************Check if second glm::dot should be [1] not [2]
+
+	// Calculate commonly used variable AbsR (Absolute value of maxtrix3 R)
+	// Add in an epsilon term which helps to conteract arithmatic errors when two edges are parallel and their cross product is near null
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			AbsR[i][j] = glm::abs(R[i][j]);// +glm::epsilon<glm::half>(); //**********************Check if that epsilon addition is right
+		}
+	}
+	#pragma endregion
+
+	/*
+	Notes for SAT calculations done below: 
+	L represents some axis we are comparing the two OBBs along
+	A represents the first OBB, in this case this Rigid Body
+	B represents the second OBB, in this case the passed in Rigid Body
+	*/
+
+	#pragma region Test axes L = A.x(0), L = A.y(1), and L = A.z(2)
+	// Test axes L = A.x(0), L = A.y(1), and L = A.z(2)
+	for (int i = 0; i < 3; i++) 
+	{
+		// Calculate the relative radiuses a and b
+		ra = a.e[i]; 
+		rb = b.e[0] * AbsR[i][0] + b.e[1] * AbsR[i][1] + b.e[2] * AbsR[i][2]; 
+
+		// If this is true there is a seperating axis so return the corresponding axis value
+		if (glm::abs(t[i]) > ra + rb) 
+		{
+			if (i == 0)
+				return eSATResults::SAT_AX;
+			else if (i == 1)
+				return eSATResults::SAT_AY;
+			else if (i == 2)
+				return eSATResults::SAT_AZ;
+		}
+	}
+	#pragma endregion
+
+	#pragma region Test axes L = B.x(0), L = B.y(1), and L = B.z(2)
+	// Test axes L = B.x(0), L = B.y(1), and L = B.z(2)
+	for (int i = 0; i < 3; i++)
+	{
+		// Calculate the relative radiuses a and b
+		ra = a.e[0] * AbsR[0][i] + a.e[1] * AbsR[1][i] + a.e[2] * AbsR[2][i];
+		rb = b.e[i];
+
+		// If this is true there is a seperating axis so return the corresponding axis value
+		if (glm::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb)
+		{
+			if (i == 0)
+				return eSATResults::SAT_BX;
+			else if (i == 1)
+				return eSATResults::SAT_BY;
+			else if (i == 2)
+				return eSATResults::SAT_BZ;
+		}
+	}
+	#pragma endregion
+
+	#pragma region Test axes L = A.x(0) x B.x(0)  
+	// Test axes L = A.x(0) x B.x(0)  
+	ra = a.e[1] * AbsR[2][0] + a.e[2] * AbsR[1][0];
+	rb = b.e[1] * AbsR[0][2] + b.e[2] * AbsR[0][1];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb)
+		return eSATResults::SAT_AXxBX;
+	#pragma endregion
+
+	#pragma region Test axes L = A.x(0) x B.y(1)
+	// Test axes L = A.x(0) x B.y(1)
+	ra = a.e[1] * AbsR[2][1] + a.e[2] * AbsR[1][1];
+	rb = b.e[0] * AbsR[0][2] + b.e[2] * AbsR[0][0];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb)
+		return eSATResults::SAT_AXxBY;
+	#pragma endregion
+
+	#pragma region Test axes L = A.x(0) x B.z(2)
+	// Test axes L = A.x(0) x B.z(2)
+	ra = a.e[1] * AbsR[2][2] + a.e[2] * AbsR[1][2];
+	rb = b.e[0] * AbsR[0][1] + b.e[1] * AbsR[0][0];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb)
+		return eSATResults::SAT_AXxBZ;
+	#pragma endregion
+
+	#pragma region Test axes L = A.y(1) x B.x(0)
+	// Test axes L = A.y(1) x B.x(0)
+	ra = a.e[0] * AbsR[2][0] + a.e[2] * AbsR[0][0];
+	rb = b.e[1] * AbsR[1][2] + b.e[2] * AbsR[1][1];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb)
+		return eSATResults::SAT_AYxBX;
+	#pragma endregion
+
+	#pragma region Test axes L = A.y(1) x B.y(1)
+	// Test axes L = A.y(1) x B.y(1)
+	ra = a.e[0] * AbsR[2][1] + a.e[2] * AbsR[0][1];
+	rb = b.e[0] * AbsR[1][2] + b.e[2] * AbsR[1][0];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb)
+		return eSATResults::SAT_AYxBY;
+	#pragma endregion
+
+	#pragma region Test axes L = A.y(1) x B.z(2)
+	// Test axes L = A.y(1) x B.z(2)
+	ra = a.e[0] * AbsR[2][2] + a.e[2] * AbsR[0][2];
+	rb = b.e[0] * AbsR[1][1] + b.e[1] * AbsR[1][0];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb)
+		return eSATResults::SAT_AYxBZ;
+	#pragma endregion
+
+	#pragma region Test axes L = A.z(2) x B.x(0)
+	// Test axes L = A.z(2) x B.x(0)
+	ra = a.e[0] * AbsR[1][0] + a.e[1] * AbsR[0][0];
+	rb = b.e[1] * AbsR[2][2] + b.e[2] * AbsR[2][1];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb)
+		return eSATResults::SAT_AZxBX;
+	#pragma endregion
+
+	#pragma region Test axes L = A.z(2) x B.y(1)
+	// Test axes L = A.z(2) x B.y(1)
+	ra = a.e[0] * AbsR[1][1] + a.e[1] * AbsR[0][1];
+	rb = b.e[0] * AbsR[2][2] + b.e[2] * AbsR[2][0];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb)
+		return eSATResults::SAT_AZxBY;
+	#pragma endregion
+
+	#pragma region Test axes L = A.z(2) x B.z(2)
+	// Test axes L = A.z(2) x B.z(2)
+	ra = a.e[0] * AbsR[1][2] + a.e[1] * AbsR[0][2];
+	rb = b.e[0] * AbsR[2][1] + b.e[1] * AbsR[2][0];
+
+	// If this is true there is a seperating axis so return the corresponding axis value
+	if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb)
+		return eSATResults::SAT_AZxBZ;
+	#pragma endregion
+
+	// There was no seperating axis found, therefore the two objects are intersecting and we should return a non-zero value
 	return eSATResults::SAT_NONE;
 }
