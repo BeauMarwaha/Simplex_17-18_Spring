@@ -7,8 +7,8 @@ namespace Simplex
 	class MyEntityManager
 	{
 	public:
-		static MyEntityManager* getInstance();
-		void deleteInstance();
+		static MyEntityManager* GetInstance();
+		void DeleteInstance();
 
 		MyEntity* GetEntity(String name);
 		void AddEntity(String a_sFileName, String a_sUniqueID = "NA");
@@ -19,7 +19,7 @@ namespace Simplex
 		~MyEntityManager();
 		MyEntityManager& operator=(MyEntityManager const& other);
 
-		static MyEntityManager* instance;
+		static MyEntityManager* m_Instance;
 		std::vector<MyEntity*> m_EntityList;
 	};
 

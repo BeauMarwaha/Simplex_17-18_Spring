@@ -9,15 +9,25 @@ void Application::InitVariables(void)
 
 	m_pLightMngr->SetPosition(vector3(0.0f, 3.0f, 13.0f), 1); //set the position of first light (0 is reserved for ambient light)
 
-	//creeper
-	m_pCreeper = new MyEntity("Minecraft\\Creeper.obj", "Creeper");
+	////creeper
+	//m_pCreeper = new MyEntity("Minecraft\\Creeper.obj", "Creeper");
 
-	//steve
-	m_pSteve = new MyEntity("Minecraft\\Steve.obj", "Steve");
+	////steve
+	//m_pSteve = new MyEntity("Minecraft\\Steve.obj", "Steve");
 
-	m_pCow = new MyEntity("Minecraft\\Cow.obj", "Cow");
-	m_pZombie = new MyEntity("Minecraft\\Zombie.obj", "Zombie");
-	m_pPig = new MyEntity("Minecraft\\Pig.obj", "Pig");
+	//m_pCow = new MyEntity("Minecraft\\Cow.obj", "Cow");
+	//m_pZombie = new MyEntity("Minecraft\\Zombie.obj", "Zombie");
+	//m_pPig = new MyEntity("Minecraft\\Pig.obj", "Pig");
+
+	// Set up entity manager
+	manager = MyEntityManager::GetInstance();
+
+	// Add entitys to manager
+	manager->AddEntity("Minecraft\\Creeper.obj", "Creeper");
+	manager->AddEntity("Minecraft\\Steve.obj", "Steve");
+	manager->AddEntity("Minecraft\\Cow.obj", "Cow");
+	manager->AddEntity("Minecraft\\Zombie.obj", "Zombie");
+	manager->AddEntity("Minecraft\\Pig.obj", "Pig");
 }
 void Application::Update(void)
 {
@@ -32,31 +42,42 @@ void Application::Update(void)
 
 	//Set model matrix to the creeper
 	matrix4 mCreeper = glm::translate(m_v3Creeper) * ToMatrix4(m_qCreeper) * ToMatrix4(m_qArcBall);
-	m_pCreeper->SetModelMatrix(mCreeper);
-
+	//m_pCreeper->SetModelMatrix(mCreeper);
+	manager->GetEntity("Creeper")->SetModelMatrix(mCreeper);
 
 	//Set model matrix to Steve
 	matrix4 mSteve = glm::translate(vector3(2.25f, 0.0f, 0.0f)) * glm::rotate(IDENTITY_M4, -55.0f, AXIS_Z);
-	m_pSteve->SetModelMatrix(mSteve);
+	//m_pSteve->SetModelMatrix(mSteve);
+	manager->GetEntity("Steve")->SetModelMatrix(mSteve);
 
 	matrix4 mCow = glm::translate(vector3(1.55f, 1.0f, 0.0f)) * glm::rotate(IDENTITY_M4, -55.0f, AXIS_Z);
 	matrix4 mPig = glm::translate(vector3(0.0f, 0.5f, -1.5f)) * glm::rotate(IDENTITY_M4, -55.0f, AXIS_Z);
 	matrix4 mZombie = glm::translate(vector3(1.55f, 0.0f, -3.0f)) * glm::rotate(IDENTITY_M4, -55.0f, AXIS_Z);
 
 
-	m_pCow->SetModelMatrix(mCow);
-	m_pPig->SetModelMatrix(mPig);
-	m_pZombie->SetModelMatrix(mZombie);
+	//m_pCow->SetModelMatrix(mCow);
+	//m_pPig->SetModelMatrix(mPig);
+	//m_pZombie->SetModelMatrix(mZombie);
+
+	manager->GetEntity("Cow")->SetModelMatrix(mCow);
+	manager->GetEntity("Pig")->SetModelMatrix(mPig);
+	manager->GetEntity("Zombie")->SetModelMatrix(mZombie);
 
 	//Check collision
-	bool bColliding = m_pCreeper->IsColliding(m_pSteve);
+	//bool bColliding = m_pCreeper->IsColliding(m_pSteve);
+	bool bColliding = manager->GetEntity("Creeper")->IsColliding(manager->GetEntity("Steve"));
 
 	//Add objects to render list
-	m_pCreeper->AddToRenderList(true);
+	/*m_pCreeper->AddToRenderList(true);
 	m_pSteve->AddToRenderList(true);
 	m_pZombie->AddToRenderList(true);
 	m_pPig->AddToRenderList(true);
-	m_pCow->AddToRenderList(true);
+	m_pCow->AddToRenderList(true);*/
+	manager->GetEntity("Creeper")->AddToRenderList(true);
+	manager->GetEntity("Steve")->AddToRenderList(true);
+	manager->GetEntity("Zombie")->AddToRenderList(true);
+	manager->GetEntity("Pig")->AddToRenderList(true);
+	manager->GetEntity("Cow")->AddToRenderList(true);
 
 }
 void Application::Display(void)
@@ -82,15 +103,17 @@ void Application::Display(void)
 
 void Application::Release(void)
 {
-	//release the creeper
-	SafeDelete(m_pCreeper);
+	////release the creeper
+	//SafeDelete(m_pCreeper);
 
-	//release Steve
-	SafeDelete(m_pSteve);
+	////release Steve
+	//SafeDelete(m_pSteve);
 
-	SafeDelete(m_pZombie);
-	SafeDelete(m_pCow);
-	SafeDelete(m_pPig);
+	//SafeDelete(m_pZombie);
+	//SafeDelete(m_pCow);
+	//SafeDelete(m_pPig);
+
+	manager->DeleteInstance();
 
 	//release GUI
 	ShutdownGUI();

@@ -10,18 +10,20 @@ Date: 2017/06
 #include "ControllerConfiguration.h"
 #include "imgui\ImGuiObject.h"
 
-#include "MyEntity.h"
+#include "MyEntityManager.h"
 
 namespace Simplex
 {
 	//Adding Application to the Simplex namespace
 class Application
 {
-	MyEntity* m_pCreeper = nullptr; //Entity that represents the Creeper model
-	MyEntity* m_pSteve = nullptr; //Entity that represents the Steve model
-	MyEntity* m_pZombie = nullptr; //Entity that represents the Steve model
-	MyEntity* m_pCow = nullptr; //Entity that represents the Steve model
-	MyEntity* m_pPig = nullptr; //Entity that represents the Steve model
+	//MyEntity* m_pCreeper = nullptr; //Entity that represents the Creeper model
+	//MyEntity* m_pSteve = nullptr; //Entity that represents the Steve model
+	//MyEntity* m_pZombie = nullptr; //Entity that represents the Steve model
+	//MyEntity* m_pCow = nullptr; //Entity that represents the Steve model
+	//MyEntity* m_pPig = nullptr; //Entity that represents the Steve model
+
+	MyEntityManager* manager = nullptr;
 
 	vector3 m_v3Creeper; //position of the creeper
 	quaternion m_qCreeper; //orientation for the creeper
