@@ -58,7 +58,57 @@ void Application::Update(void)
 	if (bColliding)
 		m_pMeshMngr->PrintLine("YES!", C_RED);
 	else
-		m_pMeshMngr->PrintLine("no", C_YELLOW);
+		switch (m_pCreeperRB->GetCollisionType())
+		{
+		case eSATResults::SAT_AX:
+			m_pMeshMngr->PrintLine("No - SAT_AX", C_YELLOW);
+			break;
+		case eSATResults::SAT_AY:
+			m_pMeshMngr->PrintLine("No - SAT_AY", C_YELLOW);
+			break;
+		case eSATResults::SAT_AZ:
+			m_pMeshMngr->PrintLine("No - SAT_AZ", C_YELLOW);
+			break;
+		case eSATResults::SAT_BX:
+			m_pMeshMngr->PrintLine("No - SAT_BX", C_YELLOW);
+			break;
+		case eSATResults::SAT_BY:
+			m_pMeshMngr->PrintLine("No - SAT_BY", C_YELLOW);
+			break;
+		case eSATResults::SAT_BZ:
+			m_pMeshMngr->PrintLine("No - SAT_BZ", C_YELLOW);
+			break;
+		case eSATResults::SAT_AXxBX:
+			m_pMeshMngr->PrintLine("No - SAT_AXxBX", C_YELLOW);
+			break;
+		case eSATResults::SAT_AXxBY:
+			m_pMeshMngr->PrintLine("No - SAT_AXxBY", C_YELLOW);
+			break;
+		case eSATResults::SAT_AXxBZ:
+			m_pMeshMngr->PrintLine("No - SAT_AXxBZ", C_YELLOW);
+			break;
+		case eSATResults::SAT_AYxBX:
+			m_pMeshMngr->PrintLine("No - SAT_AYxBX", C_YELLOW);
+			break;
+		case eSATResults::SAT_AYxBY:
+			m_pMeshMngr->PrintLine("No - SAT_AYxBY", C_YELLOW);
+			break;
+		case eSATResults::SAT_AYxBZ:
+			m_pMeshMngr->PrintLine("No - SAT_AYxBZ", C_YELLOW);
+			break;
+		case eSATResults::SAT_AZxBX:
+			m_pMeshMngr->PrintLine("No - SAT_AZxBX", C_YELLOW);
+			break;
+		case eSATResults::SAT_AZxBY:
+			m_pMeshMngr->PrintLine("No - SAT_AZxBY", C_YELLOW);
+			break;
+		case eSATResults::SAT_AZxBZ:
+			m_pMeshMngr->PrintLine("No - SAT_AZxBZ", C_YELLOW);
+			break;
+		default:
+			m_pMeshMngr->PrintLine("No", C_YELLOW);
+			break;
+		}
 }
 void Application::Display(void)
 {

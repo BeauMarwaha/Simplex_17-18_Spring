@@ -124,6 +124,7 @@ void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 	//we calculate the distance between min and max vectors
 	m_v3ARBBSize = m_v3MaxG - m_v3MinG;
 }
+eSATResults MyRigidBody::GetCollisionType(void) { return m_eCollisionType; }
 //The big 3
 MyRigidBody::MyRigidBody(std::vector<vector3> a_pointList)
 {
@@ -227,13 +228,17 @@ void MyRigidBody::ClearCollidingList(void)
 bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 {
 	//check if spheres are colliding as pre-test
-	bool bColliding = (glm::distance(GetCenterGlobal(), a_pOther->GetCenterGlobal()) < m_fRadius + a_pOther->m_fRadius);
-	
+	//bool bColliding = (glm::distance(GetCenterGlobal(), a_pOther->GetCenterGlobal()) < m_fRadius + a_pOther->m_fRadius);
+	bool bColliding = true;
+
 	//if they are colliding check the SAT
 	if (bColliding)
 	{
-		if(SAT(a_pOther) != eSATResults::SAT_NONE)
+		m_eCollisionType = (eSATResults)SAT(a_pOther);
+		if (m_eCollisionType != eSATResults::SAT_NONE)
+		{
 			bColliding = false;// reset to false
+		}
 	}
 
 	if (bColliding) //they are colliding
@@ -288,53 +293,53 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	#pragma region Initial OBB Setup
 	// Define OBB (Oriented Bounding Box) for later use
 	struct OBB {
-		vector3 c;		// The center point
-		vector3 u[3];	// Local x, y, and, z axis
-		vector3 e;		// Positive halfwidths along each axis
+		vector3 center;		// The center point
+		vector3 localAxes[3];	// Local x, y, and, z axis
+		vector3 halfwidth;		// Positive halfwidths along each axis
 	};
 
 	// Define this object as OBB a
 	OBB a = OBB();
-	a.c = m_v3Center;
-	a.u[0] = vector3(m_v3MaxL.x - m_v3MinL.x); //**************************Figure these values out
-	a.u[1] = vector3(); //**************************Figure these values out
-	a.u[2] = vector3(); //**************************Figure these values out
-	a.e = m_v3HalfWidth;
+	a.center = GetCenterGlobal();
+	a.localAxes[0] = vector3(GetModelMatrix() * vector4(AXIS_X, 0)); 
+	a.localAxes[1] = vector3(GetModelMatrix() * vector4(AXIS_Y, 0)); 
+	a.localAxes[2] = vector3(GetModelMatrix() * vector4(AXIS_Z, 0));
+	a.halfwidth = m_v3HalfWidth;
 
 	// Define the object we are checking as OBB b
 	OBB b = OBB();
-	b.c = a_pOther->m_v3Center;
-	b.u[0] = vector3(); //**************************Figure these values out
-	b.u[1] = vector3(); //**************************Figure these values out
-	b.u[2] = vector3(); //**************************Figure these values out
-	b.e = a_pOther->m_v3HalfWidth;
+	b.center = a_pOther->GetCenterGlobal();
+	b.localAxes[0] = vector3(a_pOther->GetModelMatrix() * vector4(AXIS_X, 0));
+	b.localAxes[1] = vector3(a_pOther->GetModelMatrix() * vector4(AXIS_Y, 0));
+	b.localAxes[2] = vector3(a_pOther->GetModelMatrix() * vector4(AXIS_Z, 0));
+	b.halfwidth = a_pOther->m_v3HalfWidth;
 	#pragma endregion
 	
 	#pragma region Initial Calculations
-	float ra, rb;
-	matrix3 R, AbsR;
+	float radiusA, radiusB;
+	matrix3 rotMat, absRotMat;
 
 	// Calculate a rotation matrix expressing b in a's coordinate space
 	for (int i = 0; i < 3; i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			R[i][j] = glm::dot(a.u[i], b.u[j]);
+			rotMat[i][j] = glm::dot(a.localAxes[i], b.localAxes[j]);
 		}
 	}
 
-	// Calculate t which is the difference between OBB a and b's centers
-	vector3 t = b.c - a.c;
-	// Bring t into a's coordinate space
-	t = vector3(glm::dot(t, a.u[0]), glm::dot(t, a.u[2]), glm::dot(t, a.u[2])); //******************Check if second glm::dot should be [1] not [2]
+	// Calculate translation which is the difference between OBB a and b's centers
+	vector3 translation = b.center - a.center;
+	// Bring translation into a's coordinate space
+	translation = vector3(glm::dot(translation, a.localAxes[0]), glm::dot(translation, a.localAxes[1]), glm::dot(translation, a.localAxes[2])); 
 
-	// Calculate commonly used variable AbsR (Absolute value of maxtrix3 R)
+	// Calculate commonly used variable absRotMat (Absolute value of maxtrix3 rotMat)
 	// Add in an epsilon term which helps to conteract arithmatic errors when two edges are parallel and their cross product is near null
 	for (int i = 0; i < 3; i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			AbsR[i][j] = glm::abs(R[i][j]);// +glm::epsilon<glm::half>(); //**********************Check if that epsilon addition is right
+			absRotMat[i][j] = glm::abs(rotMat[i][j]);
 		}
 	}
 	#pragma endregion
@@ -351,11 +356,11 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	for (int i = 0; i < 3; i++) 
 	{
 		// Calculate the relative radiuses a and b
-		ra = a.e[i]; 
-		rb = b.e[0] * AbsR[i][0] + b.e[1] * AbsR[i][1] + b.e[2] * AbsR[i][2]; 
+		radiusA = a.halfwidth[i]; 
+		radiusB = b.halfwidth[0] * absRotMat[i][0] + b.halfwidth[1] * absRotMat[i][1] + b.halfwidth[2] * absRotMat[i][2]; 
 
 		// If this is true there is a seperating axis so return the corresponding axis value
-		if (glm::abs(t[i]) > ra + rb) 
+		if (glm::abs(translation[i]) > radiusA + radiusB) 
 		{
 			if (i == 0)
 				return eSATResults::SAT_AX;
@@ -372,11 +377,11 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	for (int i = 0; i < 3; i++)
 	{
 		// Calculate the relative radiuses a and b
-		ra = a.e[0] * AbsR[0][i] + a.e[1] * AbsR[1][i] + a.e[2] * AbsR[2][i];
-		rb = b.e[i];
+		radiusA = a.halfwidth[0] * absRotMat[0][i] + a.halfwidth[1] * absRotMat[1][i] + a.halfwidth[2] * absRotMat[2][i];
+		radiusB = b.halfwidth[i];
 
 		// If this is true there is a seperating axis so return the corresponding axis value
-		if (glm::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb)
+		if (glm::abs(translation[0] * rotMat[0][i] + translation[1] * rotMat[1][i] + translation[2] * rotMat[2][i]) > radiusA + radiusB)
 		{
 			if (i == 0)
 				return eSATResults::SAT_BX;
@@ -390,91 +395,91 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 
 	#pragma region Test axes L = A.x(0) x B.x(0)  
 	// Test axes L = A.x(0) x B.x(0)  
-	ra = a.e[1] * AbsR[2][0] + a.e[2] * AbsR[1][0];
-	rb = b.e[1] * AbsR[0][2] + b.e[2] * AbsR[0][1];
+	radiusA = a.halfwidth[1] * absRotMat[2][0] + a.halfwidth[2] * absRotMat[1][0];
+	radiusB = b.halfwidth[1] * absRotMat[0][2] + b.halfwidth[2] * absRotMat[0][1];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb)
+	if (glm::abs(translation[2] * rotMat[1][0] - translation[1] * rotMat[2][0]) > radiusA + radiusB)
 		return eSATResults::SAT_AXxBX;
 	#pragma endregion
 
 	#pragma region Test axes L = A.x(0) x B.y(1)
 	// Test axes L = A.x(0) x B.y(1)
-	ra = a.e[1] * AbsR[2][1] + a.e[2] * AbsR[1][1];
-	rb = b.e[0] * AbsR[0][2] + b.e[2] * AbsR[0][0];
+	radiusA = a.halfwidth[1] * absRotMat[2][1] + a.halfwidth[2] * absRotMat[1][1];
+	radiusB = b.halfwidth[0] * absRotMat[0][2] + b.halfwidth[2] * absRotMat[0][0];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb)
+	if (glm::abs(translation[2] * rotMat[1][1] - translation[1] * rotMat[2][1]) > radiusA + radiusB)
 		return eSATResults::SAT_AXxBY;
 	#pragma endregion
 
 	#pragma region Test axes L = A.x(0) x B.z(2)
 	// Test axes L = A.x(0) x B.z(2)
-	ra = a.e[1] * AbsR[2][2] + a.e[2] * AbsR[1][2];
-	rb = b.e[0] * AbsR[0][1] + b.e[1] * AbsR[0][0];
+	radiusA = a.halfwidth[1] * absRotMat[2][2] + a.halfwidth[2] * absRotMat[1][2];
+	radiusB = b.halfwidth[0] * absRotMat[0][1] + b.halfwidth[1] * absRotMat[0][0];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb)
+	if (glm::abs(translation[2] * rotMat[1][2] - translation[1] * rotMat[2][2]) > radiusA + radiusB)
 		return eSATResults::SAT_AXxBZ;
 	#pragma endregion
 
 	#pragma region Test axes L = A.y(1) x B.x(0)
 	// Test axes L = A.y(1) x B.x(0)
-	ra = a.e[0] * AbsR[2][0] + a.e[2] * AbsR[0][0];
-	rb = b.e[1] * AbsR[1][2] + b.e[2] * AbsR[1][1];
+	radiusA = a.halfwidth[0] * absRotMat[2][0] + a.halfwidth[2] * absRotMat[0][0];
+	radiusB = b.halfwidth[1] * absRotMat[1][2] + b.halfwidth[2] * absRotMat[1][1];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb)
+	if (glm::abs(translation[0] * rotMat[2][0] - translation[2] * rotMat[0][0]) > radiusA + radiusB)
 		return eSATResults::SAT_AYxBX;
 	#pragma endregion
 
 	#pragma region Test axes L = A.y(1) x B.y(1)
 	// Test axes L = A.y(1) x B.y(1)
-	ra = a.e[0] * AbsR[2][1] + a.e[2] * AbsR[0][1];
-	rb = b.e[0] * AbsR[1][2] + b.e[2] * AbsR[1][0];
+	radiusA = a.halfwidth[0] * absRotMat[2][1] + a.halfwidth[2] * absRotMat[0][1];
+	radiusB = b.halfwidth[0] * absRotMat[1][2] + b.halfwidth[2] * absRotMat[1][0];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb)
+	if (glm::abs(translation[0] * rotMat[2][1] - translation[2] * rotMat[0][1]) > radiusA + radiusB)
 		return eSATResults::SAT_AYxBY;
 	#pragma endregion
 
 	#pragma region Test axes L = A.y(1) x B.z(2)
 	// Test axes L = A.y(1) x B.z(2)
-	ra = a.e[0] * AbsR[2][2] + a.e[2] * AbsR[0][2];
-	rb = b.e[0] * AbsR[1][1] + b.e[1] * AbsR[1][0];
+	radiusA = a.halfwidth[0] * absRotMat[2][2] + a.halfwidth[2] * absRotMat[0][2];
+	radiusB = b.halfwidth[0] * absRotMat[1][1] + b.halfwidth[1] * absRotMat[1][0];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb)
+	if (glm::abs(translation[0] * rotMat[2][2] - translation[2] * rotMat[0][2]) > radiusA + radiusB)
 		return eSATResults::SAT_AYxBZ;
 	#pragma endregion
 
 	#pragma region Test axes L = A.z(2) x B.x(0)
 	// Test axes L = A.z(2) x B.x(0)
-	ra = a.e[0] * AbsR[1][0] + a.e[1] * AbsR[0][0];
-	rb = b.e[1] * AbsR[2][2] + b.e[2] * AbsR[2][1];
+	radiusA = a.halfwidth[0] * absRotMat[1][0] + a.halfwidth[1] * absRotMat[0][0];
+	radiusB = b.halfwidth[1] * absRotMat[2][2] + b.halfwidth[2] * absRotMat[2][1];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb)
+	if (glm::abs(translation[1] * rotMat[0][0] - translation[0] * rotMat[1][0]) > radiusA + radiusB)
 		return eSATResults::SAT_AZxBX;
 	#pragma endregion
 
 	#pragma region Test axes L = A.z(2) x B.y(1)
 	// Test axes L = A.z(2) x B.y(1)
-	ra = a.e[0] * AbsR[1][1] + a.e[1] * AbsR[0][1];
-	rb = b.e[0] * AbsR[2][2] + b.e[2] * AbsR[2][0];
+	radiusA = a.halfwidth[0] * absRotMat[1][1] + a.halfwidth[1] * absRotMat[0][1];
+	radiusB = b.halfwidth[0] * absRotMat[2][2] + b.halfwidth[2] * absRotMat[2][0];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb)
+	if (glm::abs(translation[1] * rotMat[0][1] - translation[0] * rotMat[1][1]) > radiusA + radiusB)
 		return eSATResults::SAT_AZxBY;
 	#pragma endregion
 
 	#pragma region Test axes L = A.z(2) x B.z(2)
 	// Test axes L = A.z(2) x B.z(2)
-	ra = a.e[0] * AbsR[1][2] + a.e[1] * AbsR[0][2];
-	rb = b.e[0] * AbsR[2][1] + b.e[1] * AbsR[2][0];
+	radiusA = a.halfwidth[0] * absRotMat[1][2] + a.halfwidth[1] * absRotMat[0][2];
+	radiusB = b.halfwidth[0] * absRotMat[2][1] + b.halfwidth[1] * absRotMat[2][0];
 
 	// If this is true there is a seperating axis so return the corresponding axis value
-	if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb)
+	if (glm::abs(translation[1] * rotMat[0][2] - translation[0] * rotMat[1][2]) > radiusA + radiusB)
 		return eSATResults::SAT_AZxBZ;
 	#pragma endregion
 

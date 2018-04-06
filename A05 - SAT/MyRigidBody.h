@@ -38,6 +38,8 @@ class MyRigidBody
 
 	std::set<MyRigidBody*> m_CollidingRBSet; //set of rigid bodies this one is colliding with
 
+	eSATResults m_eCollisionType = eSATResults::SAT_NONE;
+
 public:
 	/*
 	Usage: Constructor
@@ -225,6 +227,12 @@ public:
 	Output: ---
 	*/
 	void SetModelMatrix(matrix4 a_m4ModelMatrix);
+	/*
+	Usage: Gets the Collision Type
+	Arguments: ---
+	Output: CollisionType
+	*/
+	eSATResults GetCollisionType(void);
 #pragma endregion
 	
 private:
