@@ -28,6 +28,10 @@ void Application::InitVariables(void)
 	manager->AddEntity("Minecraft\\Cow.obj", "Cow");
 	manager->AddEntity("Minecraft\\Zombie.obj", "Zombie");
 	manager->AddEntity("Minecraft\\Pig.obj", "Pig");
+
+	// Example of adding/deleting entities from the manager
+	manager->AddEntity("Minecraft\\Steve.obj", "Test");
+	manager->DeleteEntity("Test");
 }
 void Application::Update(void)
 {
@@ -78,7 +82,6 @@ void Application::Update(void)
 	manager->GetEntity("Zombie")->AddToRenderList(true);
 	manager->GetEntity("Pig")->AddToRenderList(true);
 	manager->GetEntity("Cow")->AddToRenderList(true);
-
 }
 void Application::Display(void)
 {

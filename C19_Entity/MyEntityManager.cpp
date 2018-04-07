@@ -4,23 +4,6 @@ using namespace Simplex;
 
 MyEntityManager* Simplex::MyEntityManager::m_Instance;
 
-Simplex::MyEntityManager::MyEntityManager()
-{
-	m_EntityList = std::vector<MyEntity*>();
-}
-
-Simplex::MyEntityManager::~MyEntityManager() 
-{
-	for (uint i = 0; i < m_EntityList.size(); i++)
-	{
-		MyEntity* entity = m_EntityList[i];
-		SafeDelete(entity);
-	}
-	m_EntityList.clear();
-}
-
-MyEntityManager& MyEntityManager::operator=(MyEntityManager const& other) { return *this; }
-
 MyEntityManager* Simplex::MyEntityManager::GetInstance()
 {
 	if (m_Instance != nullptr)
@@ -40,6 +23,7 @@ void Simplex::MyEntityManager::DeleteInstance()
 	}
 }
 
+
 MyEntity* Simplex::MyEntityManager::GetEntity(String name)
 {
 	if (m_EntityList.size() == 0)
@@ -57,7 +41,7 @@ void Simplex::MyEntityManager::AddEntity(String a_sFileName, String a_sUniqueID)
 
 void Simplex::MyEntityManager::DeleteEntity(String name)
 {
-	if (m_EntityList.size() == 0) 
+	if (m_EntityList.size() == 0)
 	{
 		return;
 	}
@@ -71,6 +55,26 @@ void Simplex::MyEntityManager::DeleteEntity(String name)
 			m_EntityList.erase(m_EntityList.begin() + i);
 		}
 	}
-	delete item;
+	SafeDelete(item);
+}
+
+Simplex::MyEntityManager::MyEntityManager()
+{
+	m_EntityList = std::vector<MyEntity*>();
+}
+
+Simplex::MyEntityManager::~MyEntityManager() 
+{
+	for (uint i = 0; i < m_EntityList.size(); i++)
+	{
+		MyEntity* entity = m_EntityList[i];
+		SafeDelete(entity);
+	}
+	m_EntityList.clear();
+}
+
+MyEntityManager& Simplex::MyEntityManager::operator=(MyEntityManager const& other)
+{ 
+	return *this; 
 }
 
