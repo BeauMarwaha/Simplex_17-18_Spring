@@ -30,6 +30,8 @@ void Application::InitVariables(void)
 		}
 	}
 	m_uOctantLevels = 1;
+	m_pEntityMngr->GenerateOctants(m_uOctantLevels);
+	m_pEntityMngr->UpdateDimensionSetAll();
 	m_pEntityMngr->Update();
 }
 void Application::Update(void)

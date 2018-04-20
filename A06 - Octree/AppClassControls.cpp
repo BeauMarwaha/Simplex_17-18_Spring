@@ -130,6 +130,8 @@ void Application::ProcessKeyReleased(sf::Event a_event)
 		{
 			m_pEntityMngr->ClearDimensionSetAll();
 			++m_uOctantLevels;
+			m_pEntityMngr->GenerateOctants(m_uOctantLevels);
+			m_pEntityMngr->UpdateDimensionSetAll();
 			/*
 			SafeDelete(m_pRoot);
 			m_pRoot = new MyOctant(m_uOctantLevels, 5);
@@ -141,6 +143,8 @@ void Application::ProcessKeyReleased(sf::Event a_event)
 		{
 			m_pEntityMngr->ClearDimensionSetAll();
 			--m_uOctantLevels;
+			m_pEntityMngr->GenerateOctants(m_uOctantLevels);
+			m_pEntityMngr->UpdateDimensionSetAll();
 			/*
 			SafeDelete(m_pRoot);
 			m_pRoot = new MyOctant(m_uOctantLevels, 5);

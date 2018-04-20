@@ -418,3 +418,196 @@ bool Simplex::MyEntityManager::SharesDimension(String a_sUniqueID, MyEntity* con
 	}
 	return false;
 }
+
+void Simplex::MyEntityManager::UpdateDimensionSetAll(void)
+{
+	for (uint i = 0; i < m_uEntityCount; ++i)
+	{
+		UpdateDimensionSet(i);
+	}
+}
+void Simplex::MyEntityManager::UpdateDimensionSet(uint a_uIndex)
+{
+	//if the list is empty return
+	if (m_uEntityCount == 0)
+		return;
+
+	//if the index is larger than the number of entries we are asking for the last one
+	if (a_uIndex >= m_uEntityCount)
+		a_uIndex = m_uEntityCount - 1;
+
+	// Check each end node octant to see if the object is contained within it
+	for each (Octant octant in m_vOctants)
+	{
+		// Check if this is an end node octant
+		if (octant.m_bIsEndNode)
+		{
+			// Check if the object is contained in the octant
+			if (ContainedInOctant(octant, GetRigidBody(a_uIndex)))
+			{
+				// If it is, add this ocant to the dimensions thie entity is contatined in
+				m_mEntityArray[a_uIndex]->AddDimension(octant.m_uOctantID);
+			}
+		}
+	}
+}
+void Simplex::MyEntityManager::UpdateDimensionSet(String a_sUniqueID)
+{
+	//Get the entity
+	MyEntity* pTemp = MyEntity::GetEntity(a_sUniqueID);
+	//if the entity exists
+	if (pTemp)
+	{
+		// Check each end node octant to see if the object is contained within it
+		for each (Octant octant in m_vOctants)
+		{
+			// Check if this is an end node octant
+			if (octant.m_bIsEndNode)
+			{
+				// Check if the object is contained in the octant
+				if (ContainedInOctant(octant, pTemp->GetRigidBody()))
+				{
+					// If it is, add this ocant to the dimensions thie entity is contatined in
+					pTemp->AddDimension(octant.m_uOctantID);
+				}
+			}
+		}
+	}
+}
+
+void Simplex::MyEntityManager::GenerateOctants(uint a_uOctantLevels)
+{
+	// Clear the current list of octants
+	m_vOctants.clear();
+
+	// If atleast one octant level is requested calculate first octant information
+	if (a_uOctantLevels >= 1)
+	{
+		// Find the minimum and maximum points in the entity list
+		vector3 max = vector3();
+		vector3 min = vector3();
+
+		// Check each entity to see if any have a max/min value greater/less-than the current max and min points 
+		for (uint i = 0; i < m_uEntityCount; ++i)
+		{
+			MyEntity* entity = GetEntity(i);
+			vector3 eMax = entity->GetRigidBody()->GetMaxGlobal();
+			if (eMax.x > max.x)
+				max.x = eMax.x;
+		
+			if (eMax.y > max.y)
+				max.y = eMax.y;
+
+			if (eMax.z > max.z)
+				max.z = eMax.z;
+
+			vector3 eMin = entity->GetRigidBody()->GetMinGlobal();
+			if (eMin.x < min.x)
+				min.x = eMin.x;
+
+			if (eMin.y < min.y)
+				min.y = eMin.y;
+
+			if (eMin.z < min.z)
+				min.z = eMin.z;
+		}
+
+		// Set up the first octant
+		Octant firstOct = Octant();
+		firstOct.m_v3Max = max;
+		firstOct.m_v3Min = min;
+		firstOct.m_v3Center = max - ((max - min) / 2.0f);
+		firstOct.m_uOctantLevel = 1;
+		firstOct.m_uOctantID = m_uOctantCount;
+		m_uOctantCount++;
+		if (a_uOctantLevels == 1)
+			firstOct.m_bIsEndNode = true;
+		else
+			firstOct.m_bIsEndNode = false;
+
+		// Add the first octant to the octants list
+		m_vOctants.push_back(firstOct);
+
+		// Subdivide down from the first octant for each additional octant level requested
+		for (int i = 1; i < a_uOctantLevels; ++i)
+		{
+			for each (Octant octant in m_vOctants)
+			{
+				// If the octant is of the current level
+				if (octant.m_uOctantLevel == i)
+				{
+					// Check to see if the octant contains any objects
+					bool containsObject = false;
+					for (uint j = 0; j < m_uEntityCount; ++j)
+					{
+						if (ContainedInOctant(octant, GetRigidBody(j)))
+							containsObject = true;
+					}
+
+					// If the octant contains no objects it is an end node and should be noted as such and no child octants should be generated
+					if (!containsObject)
+					{
+						octant.m_bIsEndNode = true;
+						return;
+					}
+
+					// Generate child octants
+					
+				}
+			}
+		}
+	}
+}
+
+void Simplex::MyEntityManager::GenerateChildOctant(Octant a_oParent)
+{
+	vector3 max = a_oParent.m_v3Max;
+	vector3 min = a_oParent.m_v3Min;
+	vector3 center = a_oParent.m_v3Center;
+
+	Octant tlfOct = Octant();
+	tlfOct.m_v3Max = vector3(center.x, max.y, max.z);
+	tlfOct.m_v3Min = vector3(min.x, center.y, center.z);
+	tlfOct.m_v3Center = tlfOct.m_v3Max - ((tlfOct.m_v3Max - tlfOct.m_v3Min) / 2.0f);
+	tlfOct.m_uOctantLevel = a_oParent.m_uOctantLevel++;
+	tlfOct.m_uOctantID = m_uOctantCount;
+	m_uOctantCount++;
+	tlfOct.m_bIsEndNode = false;
+
+	// Add the tlf octant to the octants list
+	m_vOctants.push_back(tlfOct);
+}
+
+bool Simplex::MyEntityManager::ContainedInOctant(Octant a_octant, MyRigidBody* a_rigidBody)
+{
+	bool bColliding = true;
+
+	// Check for sphere collision
+	bColliding = (glm::distance(a_octant.m_v3Center, a_rigidBody->GetCenterGlobal()) < glm::distance(a_octant.m_v3Max, a_octant.m_v3Center) + a_rigidBody->GetRadius());
+
+	// If they are sphere colliding check the Axis Aligned Bounding Box
+	if (bColliding) //they are colliding with bounding sphere
+	{
+		if (a_octant.m_v3Max.x < a_rigidBody->GetMinGlobal().x) //this to the right of other
+			bColliding = false;
+		if (a_octant.m_v3Min.x > a_rigidBody->GetMaxGlobal.x) //this to the left of other
+			bColliding = false;
+
+		if (a_octant.m_v3Max.y < a_rigidBody->GetMinGlobal.y) //this below of other
+			bColliding = false;
+		if (a_octant.m_v3Min.y > a_rigidBody->GetMaxGlobal.y) //this above of other
+			bColliding = false;
+
+		if (a_octant.m_v3Max.z < a_rigidBody->GetMinGlobal.z) //this behind of other
+			bColliding = false;
+		if (a_octant.m_v3Min.z > a_rigidBody->GetMaxGlobal.z) //this in front of other
+			bColliding = false;
+
+		if (bColliding) //they are colliding with bounding box also
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
