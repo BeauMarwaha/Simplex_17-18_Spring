@@ -46,6 +46,7 @@ int Simplex::MyEntityManager::GetEntityIndex(String a_sUniqueID)
 }
 //Accessors
 Simplex::uint Simplex::MyEntityManager::GetEntityCount(void) {	return m_uEntityCount; }
+Simplex::uint Simplex::MyEntityManager::GetOctantCount(void) { return m_vOctants.size(); }
 Simplex::Model* Simplex::MyEntityManager::GetModel(uint a_uIndex)
 {
 	//if the list is empty return
@@ -419,7 +420,6 @@ bool Simplex::MyEntityManager::SharesDimension(String a_sUniqueID, MyEntity* con
 	}
 	return false;
 }
-
 void Simplex::MyEntityManager::UpdateDimensionSetAll(void)
 {
 	for (uint i = 0; i < m_uEntityCount; ++i)
@@ -475,7 +475,6 @@ void Simplex::MyEntityManager::UpdateDimensionSet(String a_sUniqueID)
 		}
 	}
 }
-
 void Simplex::MyEntityManager::GenerateOctants(uint a_uOctantLevels)
 {
 	// Clear the current list of octants
@@ -575,7 +574,6 @@ void Simplex::MyEntityManager::GenerateOctants(uint a_uOctantLevels)
 		}
 	}
 }
-
 void Simplex::MyEntityManager::GenerateChildOctant(Octant a_oParent)
 {
 	vector3 max = a_oParent.m_v3Max;
@@ -637,7 +635,6 @@ void Simplex::MyEntityManager::GenerateChildOctant(Octant a_oParent)
 		m_vOctants.push_back(octant);
 	}
 }
-
 bool Simplex::MyEntityManager::ContainedInOctant(Octant a_octant, MyRigidBody* a_rigidBody)
 {
 	bool bColliding = true;
@@ -670,4 +667,41 @@ bool Simplex::MyEntityManager::ContainedInOctant(Octant a_octant, MyRigidBody* a
 	}
 
 	return false;
+}
+void Simplex::MyEntityManager::DisplayOctree(MeshManager* a_pMeshManager, uint a_uOctantToDisplay)
+{
+	// Set the octant wireframe display color
+	vector3 color = vector3(0, 200, 0); // Green
+
+	// If the octant to display is greater than the number of octants display all octants
+	if (a_uOctantToDisplay >= m_vOctants.size())
+	{
+		for each (MyEntityManager::Octant octant in m_vOctants)
+		{
+			matrix4 m4Scale = glm::scale(IDENTITY_M4, vector3(octant.m_v3Max.x - octant.m_v3Min.x, octant.m_v3Max.y - octant.m_v3Min.y, octant.m_v3Max.z - octant.m_v3Min.z));
+			matrix4 m4Translate = glm::translate(IDENTITY_M4, octant.m_v3Center);
+			matrix4 m4Model = m4Translate * m4Scale;
+			a_pMeshManager->AddWireCubeToRenderList(m4Model, color);
+		}
+
+	}
+	else
+	{
+		// Otherwise just display the requested octant
+		matrix4 m4Scale = glm::scale(IDENTITY_M4, vector3(m_vOctants[a_uOctantToDisplay].m_v3Max.x - m_vOctants[a_uOctantToDisplay].m_v3Min.x, m_vOctants[a_uOctantToDisplay].m_v3Max.y - m_vOctants[a_uOctantToDisplay].m_v3Min.y, m_vOctants[a_uOctantToDisplay].m_v3Max.z - m_vOctants[a_uOctantToDisplay].m_v3Min.z));
+		matrix4 m4Translate = glm::translate(IDENTITY_M4, m_vOctants[a_uOctantToDisplay].m_v3Center);
+		matrix4 m4Model = m4Translate * m4Scale;
+		a_pMeshManager->AddWireCubeToRenderList(m4Model, color);
+	}
+}
+void Simplex::MyEntityManager::UpdateOctantsAndDimensions(uint a_uOctantLevels)
+{
+	// Clear current octant associations
+	ClearDimensionSetAll();
+
+	// Regenerate Octants
+	GenerateOctants(a_uOctantLevels);
+
+	// Regenerate octant associations
+	UpdateDimensionSetAll();
 }

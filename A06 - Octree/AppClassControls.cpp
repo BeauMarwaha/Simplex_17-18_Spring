@@ -112,43 +112,43 @@ void Application::ProcessKeyReleased(sf::Event a_event)
 		m_pCameraMngr->SetFPS(bFPSControl);
 		break;
 	case sf::Keyboard::PageUp:
+		// Increment the octant to display number
 		++m_uOctantID;
-		/*
-		if (m_uOctantID >= m_pRoot->GetOctantCount())
+
+		// Check to see if the octant to display change goes out of bounds, if so loop back to displaying all octants
+		if (m_uOctantID >= m_pEntityMngr->GetOctantCount())
 			m_uOctantID = - 1;
-		*/
+		
 		break;
 	case sf::Keyboard::PageDown:
+		// Decrement the octant to display number
 		--m_uOctantID;
-		/*
-		if (m_uOctantID >= m_pRoot->GetOctantCount())
+		
+		// Check to see if the octant to display change goes out of bounds, if so loop back to displaying all octants
+		if (m_uOctantID >= m_pEntityMngr->GetOctantCount())
 			m_uOctantID = - 1;
-		*/
+		
 		break;
 	case sf::Keyboard::Add:
-		if (m_uOctantLevels < 4)
+		// Cap max octant depth level at 5
+		if (m_uOctantLevels < 5)
 		{
-			m_pEntityMngr->ClearDimensionSetAll();
+			// Increment the octant depth level
 			++m_uOctantLevels;
-			m_pEntityMngr->GenerateOctants(m_uOctantLevels);
-			m_pEntityMngr->UpdateDimensionSetAll();
-			/*
-			SafeDelete(m_pRoot);
-			m_pRoot = new MyOctant(m_uOctantLevels, 5);
-			*/
+
+			// Clear current octant associations, regenerate octants, and then regenerate octant associations
+			m_pEntityMngr->UpdateOctantsAndDimensions(m_uOctantLevels);
 		}
 		break;
 	case sf::Keyboard::Subtract:
+		// Cap min octant depth level at 0
 		if (m_uOctantLevels > 0)
 		{
-			m_pEntityMngr->ClearDimensionSetAll();
+			// Decrement the octant depth level
 			--m_uOctantLevels;
-			m_pEntityMngr->GenerateOctants(m_uOctantLevels);
-			m_pEntityMngr->UpdateDimensionSetAll();
-			/*
-			SafeDelete(m_pRoot);
-			m_pRoot = new MyOctant(m_uOctantLevels, 5);
-			*/
+
+			// Clear current octant associations, regenerate octants, and then regenerate octant associations
+			m_pEntityMngr->UpdateOctantsAndDimensions(m_uOctantLevels);
 		}
 		break;
 	case sf::Keyboard::LShift:

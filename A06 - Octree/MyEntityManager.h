@@ -259,6 +259,12 @@ public:
 	*/
 	uint GetEntityCount(void);
 	/*
+	USAGE: Will return the count of octants in the system
+	ARGUMENTS: ---
+	OUTPUT: Octant count
+	*/
+	uint GetOctantCount(void);
+	/*
 	USAGE: Will return the vector of octants
 	ARGUMENTS: ---
 	OUTPUT: MyEntity count
@@ -302,6 +308,20 @@ public:
 	OUTPUT: does the provided octant contain the provided rigid body?
 	*/
 	bool ContainedInOctant(Octant a_octant, MyRigidBody* a_rigidBody);
+	/*
+	USAGE: will display the current octree setup associated with this entity manager using wireframe cubes
+	ARGUMENTS: 
+		MeshManager* a_pMeshManager -> the mesh manager to add the wireframe cube representations to
+		uint a_uOctantToDisplay -> the octant number to display, if < 0 will display all
+	OUTPUT: ---
+	*/
+	void DisplayOctree(MeshManager* a_pMeshManager, uint a_uOctantToDisplay = -1);
+	/*
+	USAGE: will clear current octant associations, regenerate octants, and then regenerate octant associations
+	ARGUMENTS: uint a_uOctantLevels -> count of the maximum number of octant depth levels to generate
+	OUTPUT: ---
+	*/
+	void UpdateOctantsAndDimensions(uint a_uOctantLevels);
 
 private:
 	/*

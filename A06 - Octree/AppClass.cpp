@@ -29,6 +29,12 @@ void Application::InitVariables(void)
 			m_pEntityMngr->SetModelMatrix(m4Position);
 		}
 	}
+
+	// Cube that's outside of the sphere cube generation to test octree stopping generation in cubes that have no entities in them
+	/*m_pEntityMngr->AddEntity("Minecraft\\Cube.obj");
+	matrix4 m4Position = glm::translate(vector3(150, -20, 0));
+	m_pEntityMngr->SetModelMatrix(m4Position);*/
+
 	m_uOctantLevels = 1;
 	m_pEntityMngr->GenerateOctants(m_uOctantLevels);
 	m_pEntityMngr->UpdateDimensionSetAll();
@@ -45,6 +51,21 @@ void Application::Update(void)
 	//Is the first person camera active?
 	CameraRotation();
 	
+	//Reconstructing the Octree each half a second
+	//if (m_bUsingPhysics)
+	//{
+	//	static uint nClock = m_pSystem->GenClock();
+	//	static bool bStarted = false;
+	//	if (m_pSystem->IsTimerDone(nClock) || !bStarted)
+	//	{
+	//		bStarted = true;
+	//		m_pSystem->StartTimerOnClock(0.5, nClock);
+
+	//		// Clear current octant associations, regenerate octants, and then regenerate octant associations
+	//		m_pEntityMngr->UpdateOctantsAndDimensions(m_uOctantLevels);
+	//	}
+	//}
+
 	//Update Entity Manager
 	m_pEntityMngr->Update();
 
@@ -56,20 +77,8 @@ void Application::Display(void)
 	// Clear the screen
 	ClearScreen();
 
-	//display octree
-	//m_pRoot->Display();
-
 	// Display Current Octree
-	std::vector<MyEntityManager::Octant> octants = m_pEntityMngr->GetOctants();
-	for each (MyEntityManager::Octant octant in octants)
-	{
-		Mesh cube = Mesh();
-		cube.GenerateWireCube(1.0f);
-		matrix4 m4Scale = glm::scale(IDENTITY_M4, vector3(octant.m_v3Max.x - octant.m_v3Min.x, octant.m_v3Max.y - octant.m_v3Min.y, octant.m_v3Max.z - octant.m_v3Min.z));
-		matrix4 m4Translate = glm::translate(IDENTITY_M4, octant.m_v3Center);
-		matrix4 m4Model = m4Translate * m4Scale;
-		cube.Render(m_pCameraMngr->GetProjectionMatrix(), m_pCameraMngr->GetViewMatrix(), m4Model);
-	}
+	m_pEntityMngr->DisplayOctree(m_pMeshMngr, m_uOctantID);
 	
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
