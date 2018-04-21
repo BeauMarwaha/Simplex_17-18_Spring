@@ -159,6 +159,7 @@ void Simplex::MyEntityManager::SetModelMatrix(matrix4 a_m4ToWorld, uint a_uIndex
 
 	m_mEntityArray[a_uIndex]->SetModelMatrix(a_m4ToWorld);
 }
+std::vector<Simplex::MyEntityManager::Octant> Simplex::MyEntityManager::GetOctants(void) { return m_vOctants; }
 //The big 3
 Simplex::MyEntityManager::MyEntityManager(){Init();}
 Simplex::MyEntityManager::MyEntityManager(MyEntityManager const& a_pOther){ }
@@ -479,6 +480,7 @@ void Simplex::MyEntityManager::GenerateOctants(uint a_uOctantLevels)
 {
 	// Clear the current list of octants
 	m_vOctants.clear();
+	m_uOctantCount = 1;
 
 	// If atleast one octant level is requested calculate first octant information
 	if (a_uOctantLevels >= 1)
@@ -529,30 +531,45 @@ void Simplex::MyEntityManager::GenerateOctants(uint a_uOctantLevels)
 		m_vOctants.push_back(firstOct);
 
 		// Subdivide down from the first octant for each additional octant level requested
-		for (int i = 1; i < a_uOctantLevels; ++i)
+		for (int i = 1; i <= a_uOctantLevels; ++i)
 		{
-			for each (Octant octant in m_vOctants)
+			// Iterate through all current octants
+			uint octantCount = m_vOctants.size();
+			for (uint j = 0; j < octantCount; ++j)
 			{
-				// If the octant is of the current level
-				if (octant.m_uOctantLevel == i)
+				// If the octant is of the current level we are checking
+				if (m_vOctants[j].m_uOctantLevel == i)
 				{
 					// Check to see if the octant contains any objects
 					bool containsObject = false;
-					for (uint j = 0; j < m_uEntityCount; ++j)
+					for (uint k = 0; k < m_uEntityCount; ++k)
 					{
-						if (ContainedInOctant(octant, GetRigidBody(j)))
+						if (ContainedInOctant(m_vOctants[j], GetRigidBody(k)))
+						{
 							containsObject = true;
+							break;
+						}
 					}
 
 					// If the octant contains no objects it is an end node and should be noted as such and no child octants should be generated
 					if (!containsObject)
 					{
-						octant.m_bIsEndNode = true;
-						return;
+						m_vOctants[j].m_bIsEndNode = true;
 					}
-
-					// Generate child octants
-					
+					else
+					{
+						// Check if this is the last depth level for the octants
+						if (m_vOctants[j].m_uOctantLevel == a_uOctantLevels)
+						{
+							// If it is set the octant as an end node
+							m_vOctants[j].m_bIsEndNode = true;
+						}
+						else
+						{
+							// If it isn't Generate child octants
+							GenerateChildOctant(m_vOctants[j]);
+						}
+					}
 				}
 			}
 		}
@@ -565,17 +582,60 @@ void Simplex::MyEntityManager::GenerateChildOctant(Octant a_oParent)
 	vector3 min = a_oParent.m_v3Min;
 	vector3 center = a_oParent.m_v3Center;
 
-	Octant tlfOct = Octant();
-	tlfOct.m_v3Max = vector3(center.x, max.y, max.z);
-	tlfOct.m_v3Min = vector3(min.x, center.y, center.z);
-	tlfOct.m_v3Center = tlfOct.m_v3Max - ((tlfOct.m_v3Max - tlfOct.m_v3Min) / 2.0f);
-	tlfOct.m_uOctantLevel = a_oParent.m_uOctantLevel++;
-	tlfOct.m_uOctantID = m_uOctantCount;
-	m_uOctantCount++;
-	tlfOct.m_bIsEndNode = false;
+	std::vector<Octant> childOctants = std::vector<Octant>();
 
-	// Add the tlf octant to the octants list
-	m_vOctants.push_back(tlfOct);
+	// Top Left Front Child Octant
+	childOctants.push_back(Octant());
+	childOctants[0].m_v3Max = vector3(center.x, center.y, max.z);
+	childOctants[0].m_v3Min = vector3(min.x, min.y, center.z);
+
+	// Top Right Front Child Octant
+	childOctants.push_back(Octant());
+	childOctants[1].m_v3Max = vector3(max.x, center.y, max.z);
+	childOctants[1].m_v3Min = vector3(center.x, min.y, center.z);
+
+	// Top Left Back Child Octant
+	childOctants.push_back(Octant());
+	childOctants[2].m_v3Max = vector3(center.x, max.y, max.z);
+	childOctants[2].m_v3Min = vector3(min.x, center.y, center.z);
+
+	// Top Right Back Child Octant
+	childOctants.push_back(Octant());
+	childOctants[3].m_v3Max = max;
+	childOctants[3].m_v3Min = center;
+
+	// Bottom Left Front Child Octant
+	childOctants.push_back(Octant());
+	childOctants[4].m_v3Max = center;
+	childOctants[4].m_v3Min = min;
+
+	// Bottom Right Front Child Octant
+	childOctants.push_back(Octant());
+	childOctants[5].m_v3Max = vector3(max.x, center.y, center.z);
+	childOctants[5].m_v3Min = vector3(center.x, min.y, min.z);
+
+	// Bottom Left Back Child Octant
+	childOctants.push_back(Octant());
+	childOctants[6].m_v3Max = vector3(center.x, max.y, center.z);
+	childOctants[6].m_v3Min = vector3(min.x, center.y, min.z);
+
+	// Bottom Right Back Child Octant
+	childOctants.push_back(Octant());
+	childOctants[7].m_v3Max = vector3(max.x, max.y, center.z);
+	childOctants[7].m_v3Min = vector3(center.x, center.y, min.z);
+
+	// Fill out additional octant member variables and add them to the main octants list
+	for each(Octant octant in childOctants)
+	{
+		octant.m_v3Center = octant.m_v3Max - ((octant.m_v3Max - octant.m_v3Min) / 2.0f);
+		octant.m_uOctantLevel = a_oParent.m_uOctantLevel + 1;
+		octant.m_uOctantID = m_uOctantCount;
+		m_uOctantCount++;
+		octant.m_bIsEndNode = false;
+
+		// Add the child octants to the main octants list
+		m_vOctants.push_back(octant);
+	}
 }
 
 bool Simplex::MyEntityManager::ContainedInOctant(Octant a_octant, MyRigidBody* a_rigidBody)
@@ -590,17 +650,17 @@ bool Simplex::MyEntityManager::ContainedInOctant(Octant a_octant, MyRigidBody* a
 	{
 		if (a_octant.m_v3Max.x < a_rigidBody->GetMinGlobal().x) //this to the right of other
 			bColliding = false;
-		if (a_octant.m_v3Min.x > a_rigidBody->GetMaxGlobal.x) //this to the left of other
+		if (a_octant.m_v3Min.x > a_rigidBody->GetMaxGlobal().x) //this to the left of other
 			bColliding = false;
 
-		if (a_octant.m_v3Max.y < a_rigidBody->GetMinGlobal.y) //this below of other
+		if (a_octant.m_v3Max.y < a_rigidBody->GetMinGlobal().y) //this below of other
 			bColliding = false;
-		if (a_octant.m_v3Min.y > a_rigidBody->GetMaxGlobal.y) //this above of other
+		if (a_octant.m_v3Min.y > a_rigidBody->GetMaxGlobal().y) //this above of other
 			bColliding = false;
 
-		if (a_octant.m_v3Max.z < a_rigidBody->GetMinGlobal.z) //this behind of other
+		if (a_octant.m_v3Max.z < a_rigidBody->GetMinGlobal().z) //this behind of other
 			bColliding = false;
-		if (a_octant.m_v3Min.z > a_rigidBody->GetMaxGlobal.z) //this in front of other
+		if (a_octant.m_v3Min.z > a_rigidBody->GetMaxGlobal().z) //this in front of other
 			bColliding = false;
 
 		if (bColliding) //they are colliding with bounding box also

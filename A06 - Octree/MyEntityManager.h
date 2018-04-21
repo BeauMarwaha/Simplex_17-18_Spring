@@ -17,9 +17,8 @@ class MyEntityManager
 	uint m_uEntityCount = 0; //number of elements in the list
 	PEntity* m_mEntityArray = nullptr; //array of MyEntity pointers
 	static MyEntityManager* m_pInstance; // Singleton pointer
-							 
-	uint m_uOctantCount = 1; // Counter of the current number of octants
 
+public:
 	// Octant struct definition
 	struct Octant
 	{
@@ -31,7 +30,6 @@ class MyEntityManager
 		bool m_bIsEndNode; // Indicates wether this is an end node in the octree
 	};
 
-public:
 	/*
 	Usage: Gets the singleton pointer
 	Arguments: ---
@@ -260,8 +258,12 @@ public:
 	OUTPUT: MyEntity count
 	*/
 	uint GetEntityCount(void);
-
-
+	/*
+	USAGE: Will return the vector of octants
+	ARGUMENTS: ---
+	OUTPUT: MyEntity count
+	*/
+	std::vector<Octant> GetOctants(void);
 	/*
 	USAGE: will update all dimensions from all entities
 	ARGUMENTS: ---
@@ -280,21 +282,18 @@ public:
 	OUTPUT: ---
 	*/
 	void UpdateDimensionSet(String a_sUniqueID);
-
 	/*
 	USAGE: will generate octants based on a provided level depth count
 	ARGUMENTS: uint a_uOctantLevels -> Count of the maximum number of octant depth levels to generate
 	OUTPUT: ---
 	*/
 	void GenerateOctants(uint a_uOctantLevels);
-
 	/*
 	USAGE: will generate child octants based on a provided parent octant info
 	ARGUMENTS: Octant a_oParent -> Parent Octant
 	OUTPUT: ---
 	*/
 	void GenerateChildOctant(Octant a_oParent);
-
 	/*
 	USAGE: will check if this rigid body is contained
 	ARGUMENTS: 
@@ -304,7 +303,6 @@ public:
 	*/
 	bool ContainedInOctant(Octant a_octant, MyRigidBody* a_rigidBody);
 
-	std::vector<Octant> m_vOctants = std::vector<Octant>(); // Vector of the Octants currently in use
 private:
 	/*
 	Usage: constructor
@@ -342,6 +340,9 @@ private:
 	Output: ---
 	*/
 	void Init(void);
+
+	uint m_uOctantCount = 1; // Counter of the current number of octants
+	std::vector<Octant> m_vOctants = std::vector<Octant>(); // Vector of the Octants currently in use
 };//class
 
 } //namespace Simplex

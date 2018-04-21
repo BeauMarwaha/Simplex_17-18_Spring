@@ -58,6 +58,18 @@ void Application::Display(void)
 
 	//display octree
 	//m_pRoot->Display();
+
+	// Display Current Octree
+	std::vector<MyEntityManager::Octant> octants = m_pEntityMngr->GetOctants();
+	for each (MyEntityManager::Octant octant in octants)
+	{
+		Mesh cube = Mesh();
+		cube.GenerateWireCube(1.0f);
+		matrix4 m4Scale = glm::scale(IDENTITY_M4, vector3(octant.m_v3Max.x - octant.m_v3Min.x, octant.m_v3Max.y - octant.m_v3Min.y, octant.m_v3Max.z - octant.m_v3Min.z));
+		matrix4 m4Translate = glm::translate(IDENTITY_M4, octant.m_v3Center);
+		matrix4 m4Model = m4Translate * m4Scale;
+		cube.Render(m_pCameraMngr->GetProjectionMatrix(), m_pCameraMngr->GetViewMatrix(), m4Model);
+	}
 	
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
